@@ -1,0 +1,6 @@
+{
+  "name": "NotesNap",
+  "description": "AI-Powered Screen Capture to Notes Converter. Capture your study window, extract OCR text, and compile structured study guides with Gemini AI to export as Word documents.",
+  "requestFramePermissions": ["display-capture"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

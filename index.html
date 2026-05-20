@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NotesNap - AI-Powered Study Capture</title>
+    <script>
+      // Gracefully silence expected development-frame WebSocket/Vite HMR logs
+      (function() {
+        const originalWarn = console.warn;
+        const originalError = console.error;
+        console.warn = function(...args) {
+          const msg = args.join(' ');
+          if (msg.includes('websocket') || msg.includes('vite') || msg.includes('HMR')) return;
+          originalWarn.apply(console, args);
+        };
+        console.error = function(...args) {
+          const msg = args.join(' ');
+          if (msg.includes('websocket') || msg.includes('vite') || msg.includes('HMR')) return;
+          originalError.apply(console, args);
+        };
+        window.addEventListener('error', function(e) {
+          if (e.message && (e.message.includes('WebSocket') || e.message.includes('vite'))) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+          }
+        }, true);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
