@@ -2,19 +2,9 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
-    "dist/server.cjs": {
+    "api/index.ts": {
       "memory": 3008,
       "maxDuration": 60
     }
-  },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/dist/server.cjs"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+  }
 }
