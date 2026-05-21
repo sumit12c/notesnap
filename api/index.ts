@@ -1,17 +1,23 @@
 import { VercelRequest, VercelResponse } from "@vercel/node";
 import { GoogleGenAI } from "@google/genai";
-import dotenv from "dotenv";
-
-dotenv.config();
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Enable CORS
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   // Health check
-  if (req.method === "GET" && req.url === "/api/health") {
+  if (req.method === "GET" && req.url?.includes("/health")) {
     return res.json({ status: "healthy", timestamp: new Date().toISOString() });
   }
 
   // Process session endpoint
-  if (req.method === "POST" && req.url === "/api/process-session") {
+  if (req.method === "POST" && req.url?.includes("/process-session")) {
     try {
       const { textPayload, metadata, customApiKey, modelName } = req.body;
 
@@ -26,6 +32,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           error: "Gemini API Key is not configured. Please enter a valid API Key in the Settings panel."
         });
       }
+
+      console.log("API Key present:", !!apiKey);
+      console.log("Model:", modelName || "gemini-3.5-flash");
 
       // Initialize Google GenAI
       const ai = new GoogleGenAI({
@@ -45,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         })
         .join("\n---\n\n");
 
-      const selectedModel = modelName || "gemini-3.5-flash";
+      const selectedModel = modelName || "gemini-2.0-flash";
 
       const prompt = `You are an expert educational note-taker, visual organizer, and cognitive scientist.
 I am providing you with text captured from multiple presentation screenshots during an active study class/session via OCR.
@@ -85,22 +94,32 @@ Captured Text (Chronological Log of Slides):
 ${chronologicalText}
 `;
 
+      console.log("Calling Gemini API with model:", selectedModel);
+      
       const response = await ai.models.generateContent({
         model: selectedModel,
         contents: prompt,
       });
 
       const markdownResult = response.text;
+      
+      console.log("Gemini response received, length:", markdownResult?.length);
+      
       if (!markdownResult) {
-        throw new Error("Empty response received from Gemini.");
+        console.error("Empty response from Gemini");
+        return res.status(500).json({ error: "Empty response received from Gemini. The API may have rate-limited or had an issue." });
       }
 
-      res.json({ markdown: markdownResult });
+      return res.json({ markdown: markdownResult });
     } catch (error: any) {
-      console.error("Gemini API Error:", error);
-      res.status(500).json({ error: error?.message || "Internal server error occurred while processing with Gemini AI." });
+      console.error("API Error:", error);
+      const errorMessage = error?.message || error?.toString() || "Unknown error occurred";
+      return res.status(500).json({ 
+        error: errorMessage,
+        details: error?.error?.message || "No additional details available"
+      });
     }
   }
 
-  res.status(404).json({ error: "Not found" });
+  return res.status(404).json({ error: "Not found" });
 }
